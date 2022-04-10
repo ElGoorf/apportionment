@@ -1,0 +1,66 @@
+{
+  "name": "apportionment",
+  "version": "1.0.0",
+  "description": "Collection of apportionment methods.",
+  "types": "./dist/index.d.ts",
+  "keywords": [
+    "apportionment",
+    "math",
+    "fair distribution",
+    "remainder",
+    "voting",
+    "proportional representation",
+    "Hamilton",
+    "Vinton",
+    "Hare-Niemeyer",
+    "Largest Remainder",
+    "Jefferson",
+    "D'Hondt",
+    "Adams",
+    "Webster",
+    "Huntington-Hill"
+  ],
+  "main": "./dist/index.js",
+  "module": "./index.js",
+  "scripts": {
+    "test": "tape -r ts-node/register test/*.test.ts | tap-prettify -",
+    "coverage": "nyc yarn test",
+    "report": "nyc report --reporter=html",
+    "lint": "eslint src --ext .ts",
+    "prepack": "tsc"
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.test.ts"
+    ]
+  },
+  "author": {
+    "name": "Hussein Duvigneau",
+    "email": "hussein@notmybase.com",
+    "url": "https://notmybase.com"
+  },
+  "bugs": "https://github.com/ElGoorf/apportionment/issues",
+  "homepage": "https://github.com/ElGoorf/apportionment",
+  "repository": "github:ElGoorf/apportionment",
+  "license": "GNU GPLv3",
+  "devDependencies": {
+    "@babel/cli": "^7.17.6",
+    "@babel/core": "^7.17.9",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.16.7",
+    "@types/tape": "^4.13.2",
+    "@typescript-eslint/eslint-plugin": "^5.18.0",
+    "@typescript-eslint/parser": "^5.18.0",
+    "eslint": "^8.13.0",
+    "nyc": "^15.1.0",
+    "prettier": "2.6.2",
+    "tap-prettify": "^0.0.2",
+    "tape": "^5.5.3",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "files": ["dist/**/*"]
+}
