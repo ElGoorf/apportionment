@@ -70,8 +70,9 @@ try{
     }
     */
 }
-
 ```
+
+You might find that `divMin` or `divMax` are null, in which case the number of indivisibles to ne apportioned is too low for the given algorithm to work.
 
 # Available Methods
 **`hamilton(populations: number[], seats: number): number[]`**
