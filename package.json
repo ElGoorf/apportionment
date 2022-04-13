@@ -1,6 +1,6 @@
 {
   "name": "apportionment",
-  "version": "1.0.2",
+  "version": "1.0.9",
   "description": "Collection of apportionment methods.",
   "types": "./dist/index.d.ts",
   "keywords": [
@@ -45,7 +45,7 @@
   "bugs": "https://github.com/ElGoorf/apportionment/issues",
   "homepage": "https://github.com/ElGoorf/apportionment",
   "repository": "github:ElGoorf/apportionment",
-  "license": "GNU GPLv3",
+  "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.17.6",
     "@babel/core": "^7.17.9",
