@@ -62,13 +62,10 @@ There are two categories of apportionment method covered in this library. Note t
 
 |              | Largest-Remainder Methods                                                            | Divisor Methods                                                                                  |
 | ------------ | :----------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- |
-| \----------- | \----------------------------------------------------------------------------------- | \----------------------------------------------------------------------------------------------- |
 | **Pros**     | Guaranteed to always give a conclusive result                                        | Immune from "Alabama", "New States", and "Population" Paradoxes                                  |
 |              | Always satisfies Quota Rule (1)                                                      | Variety of methods allows for different biases                                                   |
-| \----------- | \----------------------------------------------------------------------------------- | \----------------------------------------------------------------------------------------------- |
 | **Cons**     | Susceptible to "Population", "Alabama", and "New States" Paradoxes (2)               | Might fail to give a conclusive result for rounded or small numbers                              |
 |              | Limited (no) ability to adjust bias                                                  | Doesn't always satisfy Quota Rule                                                                |
-| \----------- | \----------------------------------------------------------------------------------- | \----------------------------------------------------------------------------------------------- |
 | **Best for** | When working with rounded small numbers and absolutely must have a conclusive result | Working with data that changes over time (change in results are proportional to change of input) |
 
 1. **[Quota Rule](https://en.wikipedia.org/wiki/Quota_rule)** means the quotient can only be rounded to nearest adjacent number; eg. 4.7 can only be rounded down to 4 or up to 5. With the Hamilton Method, rounding may exceed these bounds, 4.7 might round up to 6 for example. 
@@ -83,7 +80,7 @@ If the majority of your data is rounded to 2 significant figures or fewer, the d
 
 #### Functions
 
-Right now we only have one example of a Largest-Remainder Method, hence it is commonly synonymous directly with "Hamilton Method". For more detail how the function works, please see [More info] above.
+Right now we only have one example of a Largest-Remainder Method, hence it is commonly synonymous directly with "Hamilton Method". For more detail how the function works, please [see above](#more-info).
 
 | Method   | Function                                          | Bias          | Summary                                                                     |
 | :------- | :------------------------------------------------ | :------------ | :-------------------------------------------------------------------------- |
@@ -148,7 +145,7 @@ console.log(result);
 ### Largest-Average (aka "Divisor") Methods
 
 #### Functions
-Note that all of these functions have the same input parameters, only the name changes depending on the method you wish to use. For more details about how each function differs, please see [More info] above.
+Note that all of these functions have the same input parameters, only the name changes depending on the method you wish to use. For more details about how each function differs, please [see above](#more-info).
 
 | Method          | Function                                                | Bias                                                                                 | Summary                                                         |
 |---------------- |-------------------------------------------------------- | ------------------------------------------------------------------------------------ | :-------------------------------------------------------------- |
@@ -298,7 +295,7 @@ console.log(result);
 
 ## Changelog
 
-### v2.0.0 (current, "with-workings" branch) 
+### v2 (current, "with-workings" branch) 
 Expanded output of calculation to include individual steps instead of just the result. Eg:
 
 ```js
