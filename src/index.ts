@@ -1,3 +1,71 @@
+/**
+ * The result of a divisor method calculation. With low or rounded numbers it is plausible that no working method can be found.
+ *
+ *
+ * If a successful result is found, the object will be nested inside an `exact` value, otherwise the closest above-and-below results will be wrapped in `low` and `high` values.
+ *
+ * @typedef {Object} DivisorMethodResult
+ * @property {{
+ *  standardDivisor: {number}; the divisor generated in step 1 of calculation (sum of all counts divided by the indivisible)
+ *  exact?: {
+ *   modifiedDivisor: number; the first divisor found which produced a working result
+ *   quotients: number[];
+ *   apportionment: number[];
+ *  }
+ *  low?: {
+ *   modifiedDivisor: number; the closest divisor which yields the total allocation below what is available
+ *   quotients: number[]; quotients if this modified divisor is used
+ *   apportionment: number[]; final allocation if this modified divisor is used
+ *  }
+ *  high?: {
+ *   modifiedDivisor: number; the closest divisor which yields the total allocation above what is available
+ *   quotients: number[]; quotients if this modified divisor is used
+ *   apportionment: number[]; final allocation if this modified divisor is used
+ *  }
+ * }}
+ */
+
+interface DivisorMethodResponseData {
+  modifiedDivisor: number;
+  quotients: number[];
+  apportionment: number[];
+}
+
+interface DivisorMethodResultExact {
+  exact: DivisorMethodResponseData;
+}
+
+interface DivisorMethodResultRough {
+  low: DivisorMethodResponseData;
+  high: DivisorMethodResponseData;
+}
+
+type Only<T, U> = {
+  [P in keyof T]: T[P];
+} & {
+  [P in keyof U]?: never;
+};
+type Either<T, U> = Only<T, U> | Only<U, T>;
+
+type DivisorMethodResult = Either<
+  DivisorMethodResultExact,
+  DivisorMethodResultRough
+> & {
+  standardDivisor: number;
+  preAllocation: number[];
+};
+
+type RemainderMethodResult = {
+  divisor: number,
+  quotients: number[],
+  preAllocation: number[],
+  remainders: number[],
+  preAllocationSum: number,
+  preAllocationLeftOver: number,
+  leftOverAllocation: number[],
+  apportionment: number[],
+};
+
 function sum(a: number[]): number {
   return a.reduce((a, n) => a + n, 0);
 }
@@ -14,66 +82,91 @@ function fillSeats(
   populations: number[],
   divisor: number,
   method: (x: number) => number
-): number[] {
+): { quotients: number[]; apportionment: number[] } {
   const quotients = getQuotients(populations, divisor);
-  return quotients.map(method);
+  return {
+    quotients,
+    apportionment: quotients.map(method),
+  };
 }
 
 function adjustDivisor(
   populations: number[],
   seats: number,
   method: (x: number) => number
-): number[] {
-  sanityCheck(populations, seats)
-  let divisor = getDivisor(populations, seats);
+): DivisorMethodResult {
+  sanityCheck(populations, seats);
+  const standardDivisor = getDivisor(populations, seats);
+  const preAllocation = fillSeats(populations, standardDivisor, method).apportionment;
+  let modifiedDivisor = standardDivisor;
   let divMax;
   let divMin;
   let filledSeats;
-  let allocation;
+  let apportionment;
+  let quotients;
+  let allocationResultLow;
+  let allocationResultHigh;
 
   while (filledSeats !== seats) {
     let change = false;
-    allocation = fillSeats(populations, divisor, method);
-    filledSeats = sum(allocation);
+    let allocationResult = fillSeats(populations, modifiedDivisor, method);
+    ({ quotients, apportionment } = allocationResult);
+    filledSeats = sum(apportionment);
     if (seats > filledSeats) {
-      if (divMax !== divisor) {
+      if (divMax !== modifiedDivisor) {
         change = true;
-        divMax = divisor;
+        divMax = modifiedDivisor;
+        allocationResultLow = allocationResult;
       }
       if (typeof divMin !== "undefined") {
-        divisor = (divisor + divMin) / 2
+        modifiedDivisor = (modifiedDivisor + divMin) / 2;
       } else {
-        divisor = divisor / 2;
+        modifiedDivisor = modifiedDivisor / 2;
       }
     } else if (seats < filledSeats) {
-      if (divMin !== divisor) {
+      if (divMin !== modifiedDivisor) {
         change = true;
-        divMin = divisor;
+        divMin = modifiedDivisor;
+        allocationResultHigh = allocationResult;
       }
       if (typeof divMax !== "undefined") {
-        divisor = (divisor + divMax) / 2
+        modifiedDivisor = (modifiedDivisor + divMax) / 2;
       } else {
-        divisor = divisor * 2;
+        modifiedDivisor = modifiedDivisor * 2;
       }
     }
     if (!change && seats !== filledSeats) {
-      throw new Error(JSON.stringify({
-        divMin,
-        divMax,
-        low: fillSeats(populations, divMax, method),
-        high: fillSeats(populations, divMin, method)
-      }));
+      return {
+        standardDivisor,
+        preAllocation,
+        low: {
+          modifiedDivisor: divMax,
+          ...allocationResultLow,
+        },
+        high: {
+          modifiedDivisor: divMin,
+          ...allocationResultHigh,
+        },
+      };
     }
   }
 
-  return allocation;
+  return {
+    standardDivisor,
+    preAllocation,
+    exact: {
+      modifiedDivisor,
+      quotients,
+      apportionment,
+    },
+  };
 }
 
 function sanityCheck(populations, seats) {
-  if(populations.some(isNaN) || isNaN(seats)) {
+  if (populations.some(isNaN) || isNaN(seats)) {
     throw new Error("Every input must be a number.");
   }
-  if(seats === 0) {
+  if (seats === 0) {
     throw new Error("Cannot divide by 0 seats or other indivisibles.");
   }
 }
@@ -93,24 +186,47 @@ function sanityCheck(populations, seats) {
  *
  * @param {number[]} populations
  * @param {number} seats
- * @returns {number[]} seats for each state
+ * @returns {{
+ *  divisor: number; the divisor generated in step 1 of calculation (sum of all counts divided by the indivisible)
+ *  quotients: number[]; the quotients generated in step 2 of calculation (each count divided by divisor)
+ *  preAllocation: number[]; guaranteed minimum number of seats in step 3 of calculation (quotients rounded down)
+ *  remainders: number[];  the remainder of each quotient after being rounded down
+ *  preAllocationSum: number; total sum of pre-allocations
+ *  preAllocationLeftOver: number; remaining number of indivisibles after pre-allocation
+ *  leftOverAllocation: number[];  how left-overs should be distributed, in order of highest-remainder
+ *  apportionment: number[]; the final result
+ * }}
  */
-function hamilton(populations: number[], seats: number) {
-  sanityCheck(populations, seats)
+function hamilton(populations: number[], seats: number):RemainderMethodResult {
+  sanityCheck(populations, seats);
   const divisor = getDivisor(populations, seats);
   const quotients = getQuotients(populations, divisor);
-  const allocation = quotients.map(Math.floor);
-  const remainders = quotients
-    .map((q, i) => ({ r: q - allocation[i], i }))
+  const preAllocation = quotients.map(Math.floor);
+  const remainders = quotients.map((q, i) => q - preAllocation[i]);
+  const sortedRemainders = remainders
+    .map((r, i) => ({ r, i }))
     .sort((a, b) => b.r - a.r);
-  const unfilledSeats = seats - sum(allocation);
+  const preAllocationSum = sum(preAllocation);
+  const preAllocationLeftOver = seats - preAllocationSum;
 
-  for (let i = 0; i < unfilledSeats; i++) {
-    const stateToFill = remainders[i].i;
-    allocation[stateToFill] += 1;
+  const leftOverAllocation = quotients.map(() => 0);
+  const apportionment = [...preAllocation];
+  for (let i = 0; i < preAllocationLeftOver; i++) {
+    const i2 = sortedRemainders[i].i;
+    leftOverAllocation[i2] = 1;
+    apportionment[i2] += 1;
   }
 
-  return allocation;
+  return {
+    divisor,
+    quotients,
+    preAllocation,
+    remainders,
+    preAllocationSum,
+    preAllocationLeftOver,
+    leftOverAllocation,
+    apportionment,
+  };
 }
 
 /**
@@ -131,7 +247,7 @@ function hamilton(populations: number[], seats: number) {
  *
  * @param {number[]} populations
  * @param {number} seats
- * @returns {number[]} seats for each state
+ * @returns {DivisorMethodResult}
  */
 function jefferson(populations: number[], seats: number) {
   return adjustDivisor(populations, seats, Math.floor);
@@ -214,5 +330,7 @@ function huntingtonHill(populations: number[], seats: number) {
       : Math.floor(n)
   );
 }
+
+console.log('huh', jefferson([6000, 4000, 2000, 1000], 10))
 
 export { hamilton, jefferson, adams, webster, huntingtonHill };
