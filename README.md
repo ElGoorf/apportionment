@@ -166,7 +166,7 @@ Note again that each of the functions in this category will return the same obje
     exact: {
         modifiedDivisor: number,    // first divisor found which yields a workable result (other divisors are possible)
         quotients:       number[],  // quotients produced by the working modified divisor
-        apportionment:    umber[],  // final allocation produced by using the working modified divisor
+        apportionment:   number[],  // final allocation produced by using the working modified divisor
     },
 }
 ```
